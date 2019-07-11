@@ -1,8 +1,8 @@
-﻿using ECS.Components.Spawn;
+﻿using ECS.Components;
+using ECS.Components.Spawn;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
-using Unity.Mathematics;
 using Unity.Transforms;
 
 namespace ECS.System
@@ -21,10 +21,11 @@ namespace ECS.System
                     {
                         var instance = CommandBuffer.Instantiate(index, spawner.Prefab);
 
-                        CommandBuffer.SetComponent(index, instance, new Translation{Value = new float3(x - 4.5f, y - 3.5f, 0)});
+                        CommandBuffer.AddComponent(index, instance, new PositionComponent {x = x, y = y});
                     }
                 }
 
+                CommandBuffer.DestroyEntity(index, spawner.Prefab);
                 CommandBuffer.DestroyEntity(index, entity);
             }
         }

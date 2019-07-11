@@ -1,7 +1,9 @@
-﻿using UnityEngine;
+﻿using ECS.Components;
+using Unity.Entities;
+using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class InputHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class InputHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     public int Width;
     public int Height;
@@ -41,6 +43,15 @@ public class InputHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
         Debug.Log(position);
     }
 
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        var position = ScreenToCell(eventData.position);
+        var entityManager = World.Active.EntityManager;
+        var entity = entityManager.CreateEntity(typeof(DestroyComponent));
+        entityManager.SetComponentData(entity, new DestroyComponent{x = position.x, y = position.y});
+        Debug.Log(position);
+    }
+    
     private Vector2Int ScreenToCell(Vector2 position)
     {
         position.x -= _borderSize.x;
