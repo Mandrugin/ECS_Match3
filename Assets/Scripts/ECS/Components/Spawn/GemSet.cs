@@ -2,7 +2,8 @@
 
 namespace ECS.Components.Spawn
 {
-    public struct Spawner : IComponentData
+    [InternalBufferCapacity(3)]
+    public struct GemSet : IBufferElementData
     {
         public Entity Prefab;
     }
