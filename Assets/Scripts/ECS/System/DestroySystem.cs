@@ -27,24 +27,6 @@ namespace ECS.System
                 }
             }
         }
-        
-        // todo: move to separated system
-        private struct CleanJob : IJob
-        {
-            [DeallocateOnJobCompletion]
-            [ReadOnly]
-            public NativeArray<Entity> Entities;
-            public EntityCommandBuffer CommandBuffer;
-
-            public void Execute()
-            {
-                var length = Entities.Length;
-                for (var i = 0; i < length; ++i)
-                {
-                    CommandBuffer.DestroyEntity(Entities[i]);
-                }
-            }
-        }
 
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
         private EntityQuery _destroyQuery;
@@ -64,14 +46,7 @@ namespace ECS.System
                 DestroyComponents = _destroyQuery.ToComponentDataArray<DestroyComponent>(Allocator.TempJob)
             };
 
-            var cleanJob = new CleanJob
-            {
-                CommandBuffer = _commandBuffer.CreateCommandBuffer(),
-                Entities = _destroyQuery.ToEntityArray(Allocator.TempJob)
-            };
-
             var jobHandle = destroyJob.Schedule(this, inputDeps);
-            jobHandle = cleanJob.Schedule(jobHandle);
             
             _commandBuffer.AddJobHandleForProducer(jobHandle);
 
