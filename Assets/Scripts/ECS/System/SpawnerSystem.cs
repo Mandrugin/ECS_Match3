@@ -1,4 +1,5 @@
 ﻿using ECS.Components;
+using ECS.Components.Processing;
 using ECS.Components.Spawn;
 using Unity.Collections;
 using Unity.Entities;
@@ -31,6 +32,8 @@ namespace ECS.System
                             var instance = CommandBuffer.Instantiate(gemSet[RandomValues[x * 8 + y]].Prefab);
 
                             CommandBuffer.AddComponent(instance, new PositionComponent {x = x, y = y});
+                            CommandBuffer.AddComponent(instance, new InGroupComponent());
+                            CommandBuffer.AddComponent(instance, new GemTypeComponent{TypeId = RandomValues[x * 8 + y]});
                         }
                     }
 
