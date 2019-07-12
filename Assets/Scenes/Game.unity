@@ -153,7 +153,7 @@ MonoBehaviour:
   Prefabs:
   - {fileID: 5564859021821095045, guid: b485eab0d76ba82489341326093bea9a, type: 3}
   - {fileID: 7801888391379253589, guid: 233b1795a70b9764b83fa03e9e4f2d24, type: 3}
-  - {fileID: 6308110287945800798, guid: 8c02d8afa8115ab448001a6b932fd085, type: 3}
+  - {fileID: 6308110287945800798, guid: f11d7b79a61e6f544a04b967a2cff81a, type: 3}
 --- !u!4 &135418185
 Transform:
   m_ObjectHideFlags: 0
