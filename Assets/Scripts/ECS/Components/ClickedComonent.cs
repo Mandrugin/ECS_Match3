@@ -2,7 +2,7 @@
 
 namespace ECS.Components
 {
-    public struct DestroyComponent : IComponentData
+    public struct ClickedComponent : IComponentData
     {
         public int x;
         public int y;

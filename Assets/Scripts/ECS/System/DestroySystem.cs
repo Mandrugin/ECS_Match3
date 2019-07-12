@@ -34,7 +34,7 @@ namespace ECS.System
             public NativeArray<Entity> CachedEntities;
             [ReadOnly]
             [DeallocateOnJobCompletion]
-            public NativeArray<DestroyComponent> DestroyComponents;
+            public NativeArray<ClickedComponent> ClickedComponents;
             public EntityCommandBuffer CommandBuffer;
 
             public ComponentDataFromEntity<InGroupComponent> InGroup;
@@ -43,13 +43,13 @@ namespace ECS.System
             
             public void Execute()
             {
-                var count = DestroyComponents.Length;
+                var count = ClickedComponents.Length;
                 for (var i = 0; i < count; ++i)
                 {
-                    var destroyPos = DestroyComponents[i];
-                    var destroyEntity = CachedEntities[destroyPos.y * 10 + destroyPos.x];
-                    if(destroyEntity == Entity.Null) continue;
-                    Analyse(destroyPos.y * 10 + destroyPos.x, GemType[destroyEntity].TypeId, 5);
+                    var destroyPos = ClickedComponents[i];
+                    var clickedEntity = CachedEntities[destroyPos.y * 10 + destroyPos.x];
+                    if(clickedEntity == Entity.Null) continue;
+                    Analyse(destroyPos.y * 10 + destroyPos.x, GemType[clickedEntity].TypeId, 5);
 
                     for (var y = 0; y < CachedEntities.Length; ++y)
                     {
@@ -66,101 +66,63 @@ namespace ECS.System
 
             private void Analyse(int i, int typeId, int groupId)
             {
+                if (i == -1) return;
+                
                 var entity = CachedEntities[i];
 
                 // Check entity
-                if (entity == Entity.Null)
-                    return;
+                if (entity == Entity.Null) return;
                 
                 // Check type
-                if (typeId != GemType[entity].TypeId)
-                {
-                    return;
-                }
+                if (typeId != GemType[entity].TypeId) return;
                 
                 // Check group
-                if (InGroup[entity].GroupId != 0)
-                {
-                    return;
-                }
+                if (InGroup[entity].GroupId != 0) return;
                 
                 // Set group
                 InGroup[entity] = new InGroupComponent {GroupId = groupId};
                 
-                var up = GetUp(i);
-                if (up != -1)
-                {
-                    Analyse(up, typeId, groupId);
-                }
-
-                var down = GetDown(i);
-                if (down != -1)
-                {
-                    Analyse(down, typeId, groupId);
-                }
-                
-                var right = GetRight(i);
-                if (right != -1)
-                {
-                    Analyse(right, typeId, groupId);
-                }
-                
-                var left = GetLeft(i);
-                if (left != -1)
-                {
-                    Analyse(left, typeId, groupId);
-                }
+                Analyse(GetUp(i), typeId, groupId);
+                Analyse(GetDown(i), typeId, groupId);
+                Analyse(GetRight(i), typeId, groupId);
+                Analyse(GetLeft(i), typeId, groupId);
             }
 
-            private int GetRight(int i)
+            private static int GetRight(int i)
             {
-                var x = i % 10;
-                var y = i / 10;
-                
-                x += 1;
-                if (x >= 10)
-                    return -1;
-                return y * 10 + x;
+                if (i % 10 < 10 - 1) return i + 1;
+                return -1;
             }
             
-            private int GetLeft(int i)
+            private static int GetLeft(int i)
             {
-                var x = i % 10;
-                var y = i / 10;
-                
-                x -= 1;
-                if (x < 0)
-                    return -1;
-                return y * 10 + x;
+                if (i % 10 > 0) return i - 1;
+                return -1;
             }
 
-            private int GetUp(int i)
+            private static int GetUp(int i)
             {
-                i += 10;
-                if (i >= 10 * 8)
-                    return -1;
+                if ((i += 10) >= 10 * 8) return -1;
                 return i;
             }
 
-            private int GetDown(int i)
+            private static int GetDown(int i)
             {
-                i -= 10;
-                if (i < 0)
-                    return -1;
+                if ((i -= 10) < 0) return -1;
                 return i;                
             }
         }
 
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
-        private EntityQuery _destroyQuery;
+        private EntityQuery _clickedQuery;
         private EntityQuery _positionsQuery;
 
         protected override void OnCreate()
         {
-            _destroyQuery = GetEntityQuery(ComponentType.ReadOnly<DestroyComponent>());
+            _clickedQuery = GetEntityQuery(ComponentType.ReadOnly<ClickedComponent>());
             _positionsQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
             _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
-            RequireForUpdate(_destroyQuery);
+            RequireForUpdate(_clickedQuery);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -178,7 +140,7 @@ namespace ECS.System
             {
                 CachedEntities = cachedEntities,
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
-                DestroyComponents = _destroyQuery.ToComponentDataArray<DestroyComponent>(Allocator.TempJob),
+                ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 GemType = GetComponentDataFromEntity<GemTypeComponent>(true),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(),
             };

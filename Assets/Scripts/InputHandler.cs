@@ -47,8 +47,8 @@ public class InputHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
     {
         var position = ScreenToCell(eventData.position);
         var entityManager = World.Active.EntityManager;
-        var entity = entityManager.CreateEntity(typeof(DestroyComponent));
-        entityManager.SetComponentData(entity, new DestroyComponent{x = position.x, y = position.y});
+        var entity = entityManager.CreateEntity(typeof(ClickedComponent));
+        entityManager.SetComponentData(entity, new ClickedComponent{x = position.x, y = position.y});
         Debug.Log(position);
     }
     

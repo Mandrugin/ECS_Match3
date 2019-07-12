@@ -1,4 +1,5 @@
 using ECS.Components;
+using ECS.Components.Processing;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -8,7 +9,7 @@ namespace ECS.System
     [UpdateAfter(typeof(DestroySystem))]
     public class CleanupSystem : JobComponentSystem
     {
-        private struct CleanJob : IJob
+        private struct CleanClicksJob : IJob
         {
             [DeallocateOnJobCompletion]
             [ReadOnly]
@@ -24,30 +25,42 @@ namespace ECS.System
                 }
             }
         }
+
+        private struct CleanInGroupsJob : IJobForEach<InGroupComponent>
+        {
+            public void Execute([WriteOnly] ref InGroupComponent inGroupComponent)
+            {
+                inGroupComponent.GroupId = 0;
+            }
+        }
         
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
-        private EntityQuery _destroyQuery;
+        private EntityQuery _clickedQuery;
 
         protected override void OnCreate()
         {
-            _destroyQuery = GetEntityQuery(ComponentType.ReadOnly<DestroyComponent>());
+            _clickedQuery = GetEntityQuery(ComponentType.ReadOnly<ClickedComponent>());
             _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
-            RequireForUpdate(_destroyQuery);
+            RequireForUpdate(_clickedQuery);
         }
         
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var cleanJob = new CleanJob
+            var cleanClicksJob = new CleanClicksJob
             {
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
-                Entities = _destroyQuery.ToEntityArray(Allocator.TempJob)
+                Entities = _clickedQuery.ToEntityArray(Allocator.TempJob)
             };
             
-            var jobHandle = cleanJob.Schedule(inputDeps);
-            
-            _commandBuffer.AddJobHandleForProducer(jobHandle);
+            var clicksJobHandle = cleanClicksJob.Schedule(inputDeps);
 
-            return jobHandle;
+            var cleanInGroupsJob = new CleanInGroupsJob();
+
+            var cleanInGroupsJobHandle = cleanInGroupsJob.Schedule(this, inputDeps);
+            
+            _commandBuffer.AddJobHandleForProducer(clicksJobHandle);
+
+            return JobHandle.CombineDependencies(clicksJobHandle, cleanInGroupsJobHandle);
         }
     }
 }
