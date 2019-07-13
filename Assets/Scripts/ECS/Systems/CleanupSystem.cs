@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
-namespace ECS.System
+namespace ECS.Systems
 {
     [UpdateAfter(typeof(DestroySystem))]
     public class CleanupSystem : JobComponentSystem

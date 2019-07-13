@@ -6,7 +6,7 @@ using Unity.Entities;
 using Unity.Jobs;
 using UnityEngine;
 
-namespace ECS.System
+namespace ECS.Systems
 {
     public class SpawnerSystem : JobComponentSystem
     {

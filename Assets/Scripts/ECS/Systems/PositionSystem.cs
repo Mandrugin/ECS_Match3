@@ -7,7 +7,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-namespace ECS.System
+namespace ECS.Systems
 {
     [UpdateAfter(typeof(SpawnerSystem))]
     public class PositionSystem : JobComponentSystem
