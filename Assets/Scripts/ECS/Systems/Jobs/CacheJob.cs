@@ -16,11 +16,13 @@ namespace ECS.Systems.Jobs
         [ReadOnly]
         [DeallocateOnJobCompletion]
         public NativeArray<Entity> Entities;
+
+        public int Width;
             
         public void Execute(int index)
         {
             var position = Positions[index];
-            CachedEntities[position.y * 10 + position.x] = Entities[index];
+            CachedEntities[position.y * Width + position.x] = Entities[index];
         }
     }
 }

@@ -12,63 +12,66 @@ namespace ECS.Systems
     {
         private struct SpawnJob : IJob
         {
+            public int Width; 
+            public int Height;
+            
             [DeallocateOnJobCompletion]
             [ReadOnly] public NativeArray<int> RandomValues;
             [ReadOnly] public BufferFromEntity<GemSet> BufferFromEntity;
-            [DeallocateOnJobCompletion]
-            [ReadOnly] public NativeArray<Entity> Entities;
+            public Entity SingletonEntity;
             public EntityCommandBuffer CommandBuffer;
 
             public void Execute()
             {
-                for (var index = 0; index < Entities.Length; ++index)
+                var gemSet = BufferFromEntity[SingletonEntity];
+            
+                for (var x = 0; x < Width; ++x)
                 {
-                    var gemSet = BufferFromEntity[Entities[index]];
-                
-                    for (var x = 0; x < 10; ++x)
+                    for (var y = 0; y < Height; ++y)
                     {
-                        for (var y = 0; y < 8; ++y)
-                        {
-                            var instance = CommandBuffer.Instantiate(gemSet[RandomValues[x * 8 + y]].Prefab);
+                        var instance = CommandBuffer.Instantiate(gemSet[RandomValues[x * Height + y]].Prefab);
 
-                            CommandBuffer.AddComponent(instance, new PositionComponent {x = x, y = y});
-                            CommandBuffer.AddComponent(instance, new InGroupComponent());
-                            CommandBuffer.AddComponent(instance, new GemTypeComponent{TypeId = RandomValues[x * 8 + y]});
-                        }
+                        CommandBuffer.AddComponent(instance, new PositionComponent {x = x, y = y});
+                        CommandBuffer.AddComponent(instance, new InGroupComponent());
+                        CommandBuffer.AddComponent(instance, new GemTypeComponent{TypeId = RandomValues[x * Height + y]});
                     }
-
-                    CommandBuffer.DestroyEntity(Entities[index]);                     
                 }
             }
         }
         
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
-        private EntityQuery _spawnerQuery;
+        private EntityQuery _positionQuery;
 
         protected override void OnCreate()
         {
             _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
-            _spawnerQuery = GetEntityQuery(ComponentType.ReadOnly<GemSet>());
-            RequireForUpdate(_spawnerQuery);
+            _positionQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
+            RequireSingletonForUpdate<SettingsComponent>();
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var randomValues = new NativeArray<int>(10 * 8, Allocator.TempJob);
+            if (_positionQuery.CalculateLength() > 0)
+                return inputDeps;
+            
+            var settings = GetSingleton<SettingsComponent>();
+            var singletonEntity = GetSingletonEntity<SettingsComponent>();
 
-            for (var i = 0; i < 10 * 8; ++i)
+            var randomValues = new NativeArray<int>(settings.Width * settings.Height, Allocator.TempJob);
+
+            for (var i = 0; i < settings.Width * settings.Height; ++i)
             {
-                randomValues[i] = Random.Range(0, 3);
+                randomValues[i] = Random.Range(0, settings.SetSize);
             }
             
-            var entities = _spawnerQuery.ToEntityArray(Allocator.TempJob);
-
             var spawnJob = new SpawnJob
             {
+                Width = settings.Width,
+                Height = settings.Height,
                 RandomValues = randomValues,
                 BufferFromEntity = GetBufferFromEntity<GemSet>(true),
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
-                Entities = entities
+                SingletonEntity = singletonEntity
             };
 
             var spawnHandler = spawnJob.Schedule(inputDeps);

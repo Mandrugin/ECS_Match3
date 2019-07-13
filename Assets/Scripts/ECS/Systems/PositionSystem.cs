@@ -12,21 +12,20 @@ namespace ECS.Systems
     [UpdateAfter(typeof(SpawnerSystem))]
     public class PositionSystem : JobComponentSystem
     {
-        private const float speed = 5f;
-        
         [BurstCompile]
         private struct PositionJob : IJobForEach<PositionComponent, Translation>
         {
             public float DeltaTime;
-            
+            public float Speed;
+
             public void Execute([ReadOnly] ref PositionComponent position, ref Translation translation)
             {
                 var newPosition = new float3(position.x - 4.5f, position.y - 3.5f, 0);
                 var direction = newPosition - translation.Value;
-                if (math.length(direction) > 0.1f)
+                if (math.length(direction) > 0.5f)
                 {
-                    var delta = math.normalize(direction) * speed * DeltaTime;
-                    translation.Value += math.normalize(direction) * speed * DeltaTime;                    
+                    var delta = math.normalize(direction) * Speed * DeltaTime;
+                    translation.Value += delta;                    
                 }
                 else
                 {
@@ -37,7 +36,8 @@ namespace ECS.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            return new PositionJob{DeltaTime = Time.deltaTime}.Schedule(this, inputDeps);
+            var setting = GetSingleton<SettingsComponent>();
+            return new PositionJob{DeltaTime = Time.deltaTime, Speed = setting.Speed}.Schedule(this, inputDeps);
         }
     }
 }

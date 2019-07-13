@@ -7,51 +7,6 @@ using Unity.Jobs;
 
 namespace ECS.Systems
 {
-    public struct ArrayHelper
-    {
-        public int Width;
-        public int Height;
-        
-        public int GetRight(int i)
-        {
-            if (i % Width < Width - 1) return i + 1;
-            return -1;
-        }
-            
-        public int GetLeft(int i)
-        {
-            if (i % Width > 0) return i - 1;
-            return -1;
-        }
-
-        public int GetUp(int i)
-        {
-            if ((i += Width) >= Width * Height) return -1;
-            return i;
-        }
-
-        public int GetDown(int i)
-        {
-            if ((i -= Width) < 0) return -1;
-            return i;
-        }
-
-        public int GetX(int i)
-        {
-            return i % Width;
-        }
-
-        public int GetY(int i)
-        {
-            return i / Width;
-        }
-
-        public int GetI(int x, int y)
-        {
-            return y * Width + x;
-        }
-    }
-    
     public class DestroySystem : JobComponentSystem
     {
         private struct DestroyJob : IJob
@@ -76,9 +31,9 @@ namespace ECS.Systems
                 for (var i = 0; i < count; ++i)
                 {
                     var destroyPos = ClickedComponents[i];
-                    var clickedEntity = CachedEntities[destroyPos.y * 10 + destroyPos.x];
+                    var clickedEntity = CachedEntities[destroyPos.y * Helper.Width + destroyPos.x];
                     if(clickedEntity == Entity.Null) continue;
-                    Analyse(destroyPos.y * 10 + destroyPos.x, GemType[clickedEntity].TypeId, 5);
+                    Analyse(destroyPos.y * Helper.Width + destroyPos.x, GemType[clickedEntity].TypeId, 5);
 
                     for (var y = 0; y < CachedEntities.Length; ++y)
                     {
@@ -134,13 +89,16 @@ namespace ECS.Systems
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var cachedEntities = new NativeArray<Entity>(10 * 8, Allocator.TempJob);
+            var settings = GetSingleton<SettingsComponent>();
+            
+            var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
 
             var cacheJob = new CacheJob
             {
                 CachedEntities = cachedEntities,
                 Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
-                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob)
+                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob),
+                Width = settings.Width
             };
             
             var destroyJob = new DestroyJob
@@ -150,7 +108,7 @@ namespace ECS.Systems
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 GemType = GetComponentDataFromEntity<GemTypeComponent>(true),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(),
-                Helper = new ArrayHelper{Width = 10, Height = 8}
+                Helper = new ArrayHelper{Width = settings.Width, Height = settings.Height}
             };
 
             var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps); 
