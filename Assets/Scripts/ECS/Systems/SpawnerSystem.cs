@@ -1,6 +1,7 @@
 ﻿using ECS.Components;
 using ECS.Components.Processing;
 using ECS.Components.Spawn;
+using ECS.Systems.Jobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -8,55 +9,58 @@ using UnityEngine;
 
 namespace ECS.Systems
 {
+    [UpdateAfter(typeof(MoveSystem))]
     public class SpawnerSystem : JobComponentSystem
     {
         private struct SpawnJob : IJob
         {
-            public int Width; 
-            public int Height;
-            
             [DeallocateOnJobCompletion]
             [ReadOnly] public NativeArray<int> RandomValues;
-            [ReadOnly] public BufferFromEntity<GemSet> BufferFromEntity;
+            [DeallocateOnJobCompletion]
+            [ReadOnly] public NativeArray<Entity> CachedEntities;
+            [ReadOnly] public BufferFromEntity<GemSet> GemSet;
             public Entity SingletonEntity;
             public EntityCommandBuffer CommandBuffer;
+            public ArrayHelper Helper;
 
             public void Execute()
             {
-                var gemSet = BufferFromEntity[SingletonEntity];
-            
-                for (var x = 0; x < Width; ++x)
-                {
-                    for (var y = 0; y < Height; ++y)
-                    {
-                        var instance = CommandBuffer.Instantiate(gemSet[RandomValues[x * Height + y]].Prefab);
+                var gemSet = GemSet[SingletonEntity];
 
-                        CommandBuffer.AddComponent(instance, new PositionComponent {x = x, y = y});
-                        CommandBuffer.AddComponent(instance, new InGroupComponent());
-                        CommandBuffer.AddComponent(instance, new GemTypeComponent{TypeId = RandomValues[x * Height + y]});
-                    }
+                for (var i = 0; i < CachedEntities.Length; ++i)
+                {
+                    if(CachedEntities[i] != Entity.Null) continue;
+
+                    var entity = CommandBuffer.Instantiate(gemSet[RandomValues[i]].Prefab);
+                    CommandBuffer.AddComponent(entity, new PositionComponent {x = Helper.GetX(i), y = Helper.GetY(i)});
+                    CommandBuffer.AddComponent(entity, new InGroupComponent());
+                    CommandBuffer.AddComponent(entity, new GemTypeComponent{TypeId = RandomValues[i]});
+                    CommandBuffer.AddComponent(entity, new JustSpawned{Value = 1});
                 }
             }
         }
         
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
-        private EntityQuery _positionQuery;
+        private EntityQuery _positionsQuery;
 
         protected override void OnCreate()
         {
             _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
-            _positionQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
+            _positionsQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
             RequireSingletonForUpdate<SettingsComponent>();
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            if (_positionQuery.CalculateLength() > 0)
-                return inputDeps;
-            
             var settings = GetSingleton<SettingsComponent>();
             var singletonEntity = GetSingletonEntity<SettingsComponent>();
+            
+            if (_positionsQuery.CalculateLength() == settings.Width * settings.Height)
+                return inputDeps;
 
+            var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
+            
+            var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
             var randomValues = new NativeArray<int>(settings.Width * settings.Height, Allocator.TempJob);
 
             for (var i = 0; i < settings.Width * settings.Height; ++i)
@@ -64,17 +68,26 @@ namespace ECS.Systems
                 randomValues[i] = Random.Range(0, settings.SetSize);
             }
             
+            var cacheJob = new CacheJob
+            {
+                CachedEntities = cachedEntities,
+                Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
+                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob),
+                Helper = helper
+            };
+            
             var spawnJob = new SpawnJob
             {
-                Width = settings.Width,
-                Height = settings.Height,
+                CachedEntities = cachedEntities,
                 RandomValues = randomValues,
-                BufferFromEntity = GetBufferFromEntity<GemSet>(true),
+                GemSet = GetBufferFromEntity<GemSet>(true),
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
-                SingletonEntity = singletonEntity
+                SingletonEntity = singletonEntity,
+                Helper = helper
             };
 
-            var spawnHandler = spawnJob.Schedule(inputDeps);
+            var spawnHandler = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps);
+            spawnHandler = spawnJob.Schedule(spawnHandler);
             
             _commandBuffer.AddJobHandleForProducer(spawnHandler);
 

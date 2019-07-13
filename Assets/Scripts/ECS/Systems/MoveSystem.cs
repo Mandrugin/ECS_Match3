@@ -67,6 +67,8 @@ namespace ECS.Systems
             var settings = GetSingleton<SettingsComponent>();
             
             if (_positionsQuery.CalculateLength() == settings.Width * settings.Height) return inputDeps;
+
+            var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
             
             var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
 
@@ -75,7 +77,7 @@ namespace ECS.Systems
                 CachedEntities = cachedEntities,
                 Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
                 Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob),
-                Width = settings.Width
+                Helper = helper
             };
 
             var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps);
@@ -84,7 +86,7 @@ namespace ECS.Systems
             {
                 CachedEntities = cachedEntities,
                 Position = GetComponentDataFromEntity<PositionComponent>(),
-                Helper = new ArrayHelper {Width = settings.Width, Height = settings.Height}
+                Helper = helper
             };
 
             jobHandle = moveJob.Schedule(jobHandle);

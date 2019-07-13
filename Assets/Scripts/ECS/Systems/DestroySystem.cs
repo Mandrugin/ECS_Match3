@@ -71,8 +71,6 @@ namespace ECS.Systems
                 Analyse(Helper.GetRight(i), typeId, groupId);
                 Analyse(Helper.GetLeft(i), typeId, groupId);
             }
-
-
         }
 
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
@@ -93,12 +91,14 @@ namespace ECS.Systems
             
             var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
 
+            var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
+
             var cacheJob = new CacheJob
             {
                 CachedEntities = cachedEntities,
                 Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
                 Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob),
-                Width = settings.Width
+                Helper = helper
             };
             
             var destroyJob = new DestroyJob
@@ -108,7 +108,7 @@ namespace ECS.Systems
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 GemType = GetComponentDataFromEntity<GemTypeComponent>(true),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(),
-                Helper = new ArrayHelper{Width = settings.Width, Height = settings.Height}
+                Helper = helper
             };
 
             var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps); 
