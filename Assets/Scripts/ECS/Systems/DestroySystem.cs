@@ -1,6 +1,5 @@
 ﻿using ECS.Components;
 using ECS.Components.Processing;
-using ECS.Systems.Jobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -51,13 +50,13 @@ namespace ECS.Systems
             return y * Width + x;
         }
     }
-    
+
+    [UpdateAfter(typeof(CacheSystem))]
     public class DestroySystem : JobComponentSystem
     {
         private struct DestroyJob : IJob
         {
             [ReadOnly]
-            [DeallocateOnJobCompletion]
             public NativeArray<Entity> CachedEntities;
             [ReadOnly]
             [DeallocateOnJobCompletion]
@@ -116,46 +115,33 @@ namespace ECS.Systems
                 Analyse(Helper.GetRight(i), typeId, groupId);
                 Analyse(Helper.GetLeft(i), typeId, groupId);
             }
-
-
         }
 
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
         private EntityQuery _clickedQuery;
-        private EntityQuery _positionsQuery;
+        private CacheSystem _cacheSystem;
 
         protected override void OnCreate()
         {
             _clickedQuery = GetEntityQuery(ComponentType.ReadOnly<ClickedComponent>());
-            _positionsQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
             _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
+            _cacheSystem = World.GetOrCreateSystem<CacheSystem>();
             RequireForUpdate(_clickedQuery);
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
-            var cachedEntities = new NativeArray<Entity>(10 * 8, Allocator.TempJob);
-
-            var cacheJob = new CacheJob
-            {
-                CachedEntities = cachedEntities,
-                Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
-                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob)
-            };
-            
             var destroyJob = new DestroyJob
             {
-                CachedEntities = cachedEntities,
+                CachedEntities = _cacheSystem.CachedEntities,
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 GemType = GetComponentDataFromEntity<GemTypeComponent>(true),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(),
                 Helper = new ArrayHelper{Width = 10, Height = 8}
             };
-
-            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps); 
-
-            jobHandle = destroyJob.Schedule(jobHandle);
+            
+            var jobHandle = destroyJob.Schedule(inputDeps);
             
             _commandBuffer.AddJobHandleForProducer(jobHandle);
 

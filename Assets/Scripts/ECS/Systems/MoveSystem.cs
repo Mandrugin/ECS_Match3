@@ -1,20 +1,17 @@
 ﻿using ECS.Components;
-using ECS.Systems.Jobs;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
 
 namespace ECS.Systems
 {
-    // todo implement cache system
+    [UpdateAfter(typeof(CacheSystem))]
     public class MoveSystem : JobComponentSystem
     {
         private struct MoveJob : IJob
         {
             public ComponentDataFromEntity<PositionComponent> Position;
-            [DeallocateOnJobCompletion]
             public NativeArray<Entity> CachedEntities;
-
             public ArrayHelper Helper;
             
             public void Execute()
@@ -56,38 +53,26 @@ namespace ECS.Systems
         }
         
         private EntityQuery _positionsQuery;
+        private CacheSystem _cacheSystem;
 
         protected override void OnCreate()
         {
             _positionsQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
+            _cacheSystem = World.GetOrCreateSystem<CacheSystem>();
         }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             if (_positionsQuery.CalculateLength() == 10 * 8) return inputDeps;
             
-            var cachedEntities = new NativeArray<Entity>(10 * 8, Allocator.TempJob);
-
-            var cacheJob = new CacheJob
-            {
-                CachedEntities = cachedEntities,
-                Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
-                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob)
-            };
-
-            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps);
-
             var moveJob = new MoveJob
             {
-                CachedEntities = cachedEntities,
+                CachedEntities = _cacheSystem.CachedEntities,
                 Position = GetComponentDataFromEntity<PositionComponent>(),
                 Helper = new ArrayHelper {Width = 10, Height = 8}
             };
 
-            jobHandle = moveJob.Schedule(jobHandle);
-
-
-            return jobHandle;
+            return moveJob.Schedule(inputDeps);
         }
     }
 }
