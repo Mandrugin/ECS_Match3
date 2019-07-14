@@ -60,6 +60,9 @@ namespace ECS.Systems
             public NativeArray<Entity> CachedEntities;
             [ReadOnly]
             [DeallocateOnJobCompletion]
+            public NativeArray<CacheFlagComponent> CacheFlag;
+            [ReadOnly]
+            [DeallocateOnJobCompletion]
             public NativeArray<ClickedComponent> ClickedComponents;
             public EntityCommandBuffer CommandBuffer;
 
@@ -119,11 +122,13 @@ namespace ECS.Systems
 
         private BeginInitializationEntityCommandBufferSystem _commandBuffer;
         private EntityQuery _clickedQuery;
+        private EntityQuery _cacheFlagQuery;
         private CacheSystem _cacheSystem;
 
         protected override void OnCreate()
         {
             _clickedQuery = GetEntityQuery(ComponentType.ReadOnly<ClickedComponent>());
+            _cacheFlagQuery = GetEntityQuery(ComponentType.ReadWrite<CacheFlagComponent>());
             _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
             _cacheSystem = World.GetOrCreateSystem<CacheSystem>();
             RequireForUpdate(_clickedQuery);
@@ -138,7 +143,8 @@ namespace ECS.Systems
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 GemType = GetComponentDataFromEntity<GemTypeComponent>(true),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(),
-                Helper = new ArrayHelper{Width = 10, Height = 8}
+                Helper = new ArrayHelper{Width = 10, Height = 8},
+                CacheFlag = _cacheFlagQuery.ToComponentDataArray<CacheFlagComponent>(Allocator.TempJob)
             };
             
             var jobHandle = destroyJob.Schedule(inputDeps);

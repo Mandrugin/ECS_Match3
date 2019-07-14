@@ -24,7 +24,9 @@ namespace ECS.Components.Spawn
             {
                 var prefab = conversionSystem.GetPrimaryEntity(Prefabs[i]);
                 buffer.Add(new GemSet {Prefab = prefab});
-            } 
+            }
+
+            dstManager.CreateEntity(typeof(CacheFlagComponent));
         }
     }
 }

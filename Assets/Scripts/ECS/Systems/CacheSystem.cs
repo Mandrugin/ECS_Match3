@@ -15,6 +15,9 @@ namespace ECS.Systems
             [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<PositionComponent> Positions;
+            [WriteOnly]
+            [DeallocateOnJobCompletion]
+            public NativeArray<CacheFlagComponent> CacheFlag;
             [ReadOnly]
             [DeallocateOnJobCompletion]
             public NativeArray<Entity> Entities;
@@ -29,10 +32,12 @@ namespace ECS.Systems
         public NativeArray<Entity> CachedEntities;
         
         private EntityQuery _positionsQuery;
+        private EntityQuery _cacheFlagQuery;
 
         protected override void OnCreate()
         {
             _positionsQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
+            _cacheFlagQuery = GetEntityQuery(ComponentType.ReadWrite<CacheFlagComponent>());
             CachedEntities = new NativeArray<Entity>(10 * 8, Allocator.Persistent);
         }
 
@@ -48,7 +53,8 @@ namespace ECS.Systems
             {
                 CachedEntities = CachedEntities,
                 Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
-                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob)
+                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob),
+                CacheFlag = _cacheFlagQuery.ToComponentDataArray<CacheFlagComponent>(Allocator.TempJob)
             };
 
             var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps);
