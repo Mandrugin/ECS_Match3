@@ -66,7 +66,7 @@ namespace ECS.Systems
         {
             var settings = GetSingleton<SettingsComponent>();
             
-            if (_positionsQuery.CalculateLength() == settings.Width * settings.Height) return inputDeps;
+            if (_positionsQuery.CalculateEntityCount() == settings.Width * settings.Height) return inputDeps;
 
             var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
             
@@ -80,7 +80,7 @@ namespace ECS.Systems
                 Helper = helper
             };
 
-            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps);
+            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateEntityCount(), 32, inputDeps);
 
             var moveJob = new MoveJob
             {

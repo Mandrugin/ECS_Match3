@@ -111,7 +111,7 @@ namespace ECS.Systems
                 Helper = helper
             };
 
-            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps); 
+            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateEntityCount(), 32, inputDeps); 
 
             jobHandle = destroyJob.Schedule(jobHandle);
             
