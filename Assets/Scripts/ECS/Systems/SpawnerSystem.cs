@@ -58,7 +58,7 @@ namespace ECS.Systems
             if (_positionsQuery.CalculateEntityCount() == settings.Width * settings.Height)
                 return inputDeps;
 
-            var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
+            var helper = new ArrayHelper(settings.Width, settings.Height);
             
             var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
             var randomValues = new NativeArray<int>(settings.Width * settings.Height, Allocator.TempJob);

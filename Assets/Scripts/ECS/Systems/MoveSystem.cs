@@ -68,7 +68,7 @@ namespace ECS.Systems
             
             if (_positionsQuery.CalculateEntityCount() == settings.Width * settings.Height) return inputDeps;
 
-            var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
+            var helper = new ArrayHelper(settings.Width, settings.Height);
             
             var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
 
@@ -95,52 +95,4 @@ namespace ECS.Systems
             return jobHandle;
         }
     }
-
-//    [UpdateAfter(typeof(MoveSystem))]
-//    public class ReSpawnSystem : JobComponentSystem
-//    {
-//        private struct ReSpawnJob : IJob
-//        {
-//            [DeallocateOnJobCompletion]
-//            public NativeArray<Entity> CachedEntities;
-//            public ArrayHelper Helper;
-//            public EntityCommandBuffer CommandBuffer;
-//            
-//            public void Execute()
-//            {
-//                for (var i = 0; i < CachedEntities.Length; ++i)
-//                {
-//                    if (CachedEntities[i] != Entity.Null)
-//                        continue;
-//                }
-//            }
-//        }
-//        
-//        private EntityQuery _positionsQuery;
-//        private BeginInitializationEntityCommandBufferSystem _commandBuffer;
-//
-//        protected override void OnCreate()
-//        {
-//            _positionsQuery = GetEntityQuery(ComponentType.ReadOnly<PositionComponent>());
-//            _commandBuffer = World.GetOrCreateSystem<BeginInitializationEntityCommandBufferSystem>();
-//        }
-//
-//        protected override JobHandle OnUpdate(JobHandle inputDeps)
-//        {
-//            if (_positionsQuery.CalculateLength() == 10 * 8) return inputDeps;
-//            
-//            var cachedEntities = new NativeArray<Entity>(10 * 8, Allocator.TempJob);
-//
-//            var cacheJob = new CacheJob
-//            {
-//                CachedEntities = cachedEntities,
-//                Entities = _positionsQuery.ToEntityArray(Allocator.TempJob),
-//                Positions = _positionsQuery.ToComponentDataArray<PositionComponent>(Allocator.TempJob)
-//            };
-//
-//            var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateLength(), 32, inputDeps);
-//
-//            return jobHandle;
-//        }
-//    }
 }

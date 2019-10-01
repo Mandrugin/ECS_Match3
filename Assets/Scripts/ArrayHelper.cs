@@ -3,9 +3,15 @@
 
 public struct ArrayHelper
 {
-    public int Width;
-    public int Height;
-        
+    public readonly int Width;
+    public readonly int Height;
+
+    public ArrayHelper(int width, int height)
+    {
+        Width = width;
+        Height = height;
+    }
+
     public int GetRight(int i) => (i % Width < Width - 1) ? i + 1 : -1;
     public int GetLeft(int i) => (i % Width > 0) ? i - 1 : -1;
     public int GetUp(int i) => ((i += Width) < Width * Height) ? i : -1;

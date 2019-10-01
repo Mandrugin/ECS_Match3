@@ -31,9 +31,9 @@ namespace ECS.Systems
                 for (var i = 0; i < count; ++i)
                 {
                     var destroyPos = ClickedComponents[i];
-                    var clickedEntity = CachedEntities[destroyPos.y * Helper.Width + destroyPos.x];
+                    var clickedEntity = CachedEntities[Helper.GetI(destroyPos.x, destroyPos.y)];
                     if(clickedEntity == Entity.Null) continue;
-                    Analyse(destroyPos.y * Helper.Width + destroyPos.x, GemType[clickedEntity].TypeId, 5);
+                    Analyse(Helper.GetI(destroyPos.x, destroyPos.y), GemType[clickedEntity].TypeId, 5);
 
                     for (var y = 0; y < CachedEntities.Length; ++y)
                     {
@@ -91,7 +91,7 @@ namespace ECS.Systems
             
             var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
 
-            var helper = new ArrayHelper {Width = settings.Width, Height = settings.Height};
+            var helper = new ArrayHelper(settings.Width, settings.Height);
 
             var cacheJob = new CacheJob
             {
