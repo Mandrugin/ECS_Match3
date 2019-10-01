@@ -1,3 +1,6 @@
+// This simple helper allows to work with 1-dimensional array as 2-dimensional
+// by calculating 1-dimensional index from two coordinates and finding indexes of nearest elements
+
 public struct ArrayHelper
 {
     public int Width;
