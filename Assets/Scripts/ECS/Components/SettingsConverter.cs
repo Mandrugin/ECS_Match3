@@ -10,6 +10,7 @@ namespace ECS.Components
         // todo calculate size instead setting
         public int SetSize;
         public int Speed;
+        public int MinGroupSize;
         
         public void Convert(Entity entity, EntityManager dstManager, GameObjectConversionSystem conversionSystem)
         {
@@ -18,7 +19,8 @@ namespace ECS.Components
                 Width = Width,
                 Height = Height,
                 SetSize = SetSize,
-                Speed = Speed
+                Speed = Speed,
+                MinGroupSize = MinGroupSize
             });
         }
     }

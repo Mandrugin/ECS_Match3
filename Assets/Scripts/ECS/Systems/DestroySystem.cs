@@ -23,6 +23,7 @@ namespace ECS.Systems
             public ComponentDataFromEntity<InGroupComponent> InGroup;
 
             public ArrayHelper Helper;
+            public int MinGroupSize;
             
             public void Execute()
             {
@@ -33,6 +34,21 @@ namespace ECS.Systems
                     var clickedEntity = CachedEntities[Helper.GetI(destroyPos.x, destroyPos.y)];
                     if(clickedEntity == Entity.Null) continue;
                     var groupId = InGroup[clickedEntity].GroupId;
+
+                    var groupSize = 0;
+                    
+                    for (var y = 0; y < CachedEntities.Length; ++y)
+                    {
+                        var entity = CachedEntities[y];
+                        if (entity == Entity.Null) continue;
+                        if (InGroup[entity].GroupId == groupId)
+                        {
+                            ++groupSize;
+                        }
+                    }
+                    
+                    if(groupSize < MinGroupSize)
+                        continue;
 
                     for (var y = 0; y < CachedEntities.Length; ++y)
                     {
@@ -82,7 +98,8 @@ namespace ECS.Systems
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(true),
-                Helper = helper
+                Helper = helper,
+                MinGroupSize = settings.MinGroupSize
             };
 
             var jobHandle = cacheJob.Schedule(_positionsQuery.CalculateEntityCount(), 32, inputDeps); 

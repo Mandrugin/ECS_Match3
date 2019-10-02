@@ -8,5 +8,6 @@ namespace ECS.Components
         public int Height;
         public int SetSize;
         public int Speed;
+        public int MinGroupSize;
     }
 }
