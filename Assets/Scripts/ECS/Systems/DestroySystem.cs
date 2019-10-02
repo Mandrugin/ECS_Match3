@@ -7,6 +7,7 @@ using Unity.Jobs;
 
 namespace ECS.Systems
 {
+    [UpdateAfter(typeof(SplitSystem))]
     public class DestroySystem : JobComponentSystem
     {
         private struct DestroyJob : IJob
@@ -18,10 +19,8 @@ namespace ECS.Systems
             [DeallocateOnJobCompletion]
             public NativeArray<ClickedComponent> ClickedComponents;
             public EntityCommandBuffer CommandBuffer;
-
-            public ComponentDataFromEntity<InGroupComponent> InGroup;
             [ReadOnly]
-            public ComponentDataFromEntity<GemTypeComponent> GemType;
+            public ComponentDataFromEntity<InGroupComponent> InGroup;
 
             public ArrayHelper Helper;
             
@@ -33,43 +32,19 @@ namespace ECS.Systems
                     var destroyPos = ClickedComponents[i];
                     var clickedEntity = CachedEntities[Helper.GetI(destroyPos.x, destroyPos.y)];
                     if(clickedEntity == Entity.Null) continue;
-                    Analyse(Helper.GetI(destroyPos.x, destroyPos.y), GemType[clickedEntity].TypeId, 5);
+                    var groupId = InGroup[clickedEntity].GroupId;
 
                     for (var y = 0; y < CachedEntities.Length; ++y)
                     {
                         var entity = CachedEntities[y];
                         if (entity == Entity.Null) continue;
-                        if (InGroup[entity].GroupId != 0)
+                        if (InGroup[entity].GroupId == groupId)
                         {
                             CommandBuffer.DestroyEntity(entity);
                         }
                     }
 
                 }
-            }
-
-            private void Analyse(int i, int typeId, int groupId)
-            {
-                if (i == -1) return;
-                
-                var entity = CachedEntities[i];
-
-                // Check entity
-                if (entity == Entity.Null) return;
-                
-                // Check type
-                if (typeId != GemType[entity].TypeId) return;
-                
-                // Check group
-                if (InGroup[entity].GroupId != 0) return;
-                
-                // Set group
-                InGroup[entity] = new InGroupComponent {GroupId = groupId};
-                
-                Analyse(Helper.GetUp(i), typeId, groupId);
-                Analyse(Helper.GetDown(i), typeId, groupId);
-                Analyse(Helper.GetRight(i), typeId, groupId);
-                Analyse(Helper.GetLeft(i), typeId, groupId);
             }
         }
 
@@ -106,8 +81,7 @@ namespace ECS.Systems
                 CachedEntities = cachedEntities,
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
-                GemType = GetComponentDataFromEntity<GemTypeComponent>(true),
-                InGroup = GetComponentDataFromEntity<InGroupComponent>(),
+                InGroup = GetComponentDataFromEntity<InGroupComponent>(true),
                 Helper = helper
             };
 
