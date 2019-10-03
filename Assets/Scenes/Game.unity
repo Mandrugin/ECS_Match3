@@ -131,31 +131,14 @@ GameObject:
   m_Component:
   - component: {fileID: 135418185}
   - component: {fileID: 135418187}
-  - component: {fileID: 135418184}
   - component: {fileID: 135418186}
   m_Layer: 0
-  m_Name: Spawner
+  m_Name: Settings
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &135418184
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 135418183}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 864844174d794614390f5154ffb75bca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  Prefabs:
-  - {fileID: 5564859021821095045, guid: b485eab0d76ba82489341326093bea9a, type: 3}
-  - {fileID: 7801888391379253589, guid: 233b1795a70b9764b83fa03e9e4f2d24, type: 3}
-  - {fileID: 6308110287945800798, guid: f11d7b79a61e6f544a04b967a2cff81a, type: 3}
 --- !u!4 &135418185
 Transform:
   m_ObjectHideFlags: 0
@@ -195,11 +178,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7f301350f4d4db8ba8a067d81ed3dfb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Width: 10
-  Height: 8
-  SetSize: 3
+  Width: 20
+  Height: 16
   Speed: 15
   MinGroupSize: 3
+  Prefabs:
+  - {fileID: 5564859021821095045, guid: b485eab0d76ba82489341326093bea9a, type: 3}
+  - {fileID: 7801888391379253589, guid: 233b1795a70b9764b83fa03e9e4f2d24, type: 3}
+  - {fileID: 6308110287945800798, guid: f11d7b79a61e6f544a04b967a2cff81a, type: 3}
 --- !u!1 &260030279
 GameObject:
   m_ObjectHideFlags: 0
@@ -516,11 +502,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c32316e7d1c867444a2579ebcb243340, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Width: 10
-  Height: 8
   Camera: {fileID: 519420031}
   Quad: {fileID: 260030279}
   Collider: {fileID: 559555487}
+  SettingsConverter: {fileID: 135418187}
 --- !u!1 &1612955013
 GameObject:
   m_ObjectHideFlags: 0

@@ -5,8 +5,8 @@ using UnityEngine.EventSystems;
 
 public class InputHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
-    public int Width;
-    public int Height;
+    private int Width;
+    private int Height;
 
     public Camera Camera;
     public GameObject Quad;
@@ -14,12 +14,18 @@ public class InputHandler : MonoBehaviour, IBeginDragHandler, IDragHandler, IEnd
 
     private Vector2 _borderSize;
     private Vector2 _rectSize;
+
+    public SettingsConverter SettingsConverter;
     
     private void Start()
     {
+        Width = SettingsConverter.Width;
+        Height = SettingsConverter.Height;
+        
         Quad.transform.localScale = new Vector3(Width, Height, 1);
         Collider.size = new Vector2(Width, Height);
 
+        Camera.orthographicSize = Height / 2.0f + 1;
         var screenPos = Camera.WorldToScreenPoint(new Vector3(Width / 2, Height / 2, 0));
         _borderSize = new Vector2(Screen.width - screenPos.x, Screen.height - screenPos.y);
         _rectSize = new Vector2(Screen.width - _borderSize.x * 2, Screen.height - _borderSize.y * 2);

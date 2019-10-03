@@ -18,11 +18,12 @@ namespace ECS.Systems
             public float DeltaTime;
             public float Speed;
 
+            public int Width;
             public int Height;
 
             public void Execute([ReadOnly] ref PositionComponent position, ref JustSpawned justSpawned, ref Translation translation)
             {
-                var newPosition = new float3(position.x - 4.5f, position.y - 3.5f, 0);
+                var newPosition = new float3(position.x - Width / 2.0f + 0.5f, position.y - Height / 2.0f + 0.5f, 0);
 
                 if (justSpawned.Value == 0)
                 {
@@ -44,7 +45,9 @@ namespace ECS.Systems
                     justSpawned.Value = 0;
                 }
             }
-        }
+        }                        
+
+
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
@@ -53,6 +56,7 @@ namespace ECS.Systems
             {
                 DeltaTime = Time.deltaTime,
                 Speed = setting.Speed,
+                Width = setting.Width,
                 Height = setting.Height
             }.Schedule(this, inputDeps);
         }
