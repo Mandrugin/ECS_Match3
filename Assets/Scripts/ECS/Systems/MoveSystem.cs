@@ -91,7 +91,6 @@ namespace ECS.Systems
 
             jobHandle = moveJob.Schedule(jobHandle);
 
-
             return jobHandle;
         }
     }

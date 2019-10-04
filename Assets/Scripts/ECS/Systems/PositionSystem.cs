@@ -45,9 +45,7 @@ namespace ECS.Systems
                     justSpawned.Value = 0;
                 }
             }
-        }                        
-
-
+        }
 
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {

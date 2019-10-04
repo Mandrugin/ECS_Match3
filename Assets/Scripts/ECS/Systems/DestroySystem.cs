@@ -22,6 +22,9 @@ namespace ECS.Systems
             [ReadOnly]
             public ComponentDataFromEntity<InGroupComponent> InGroup;
 
+            public Entity ScoreEntity;
+            public ComponentDataFromEntity<ScoreComponent> Score;
+
             public ArrayHelper Helper;
             public int MinGroupSize;
             
@@ -60,6 +63,8 @@ namespace ECS.Systems
                         }
                     }
 
+                    var scores = Score[ScoreEntity];
+                    Score[ScoreEntity] = new ScoreComponent {Scores = scores.Scores + groupSize};
                 }
             }
         }
@@ -79,6 +84,7 @@ namespace ECS.Systems
         protected override JobHandle OnUpdate(JobHandle inputDeps)
         {
             var settings = GetSingleton<SettingsComponent>();
+            var scoreEntity = GetSingletonEntity<ScoreComponent>();
             
             var cachedEntities = new NativeArray<Entity>(settings.Width * settings.Height, Allocator.TempJob);
 
@@ -98,6 +104,8 @@ namespace ECS.Systems
                 CommandBuffer = _commandBuffer.CreateCommandBuffer(),
                 ClickedComponents = _clickedQuery.ToComponentDataArray<ClickedComponent>(Allocator.TempJob),
                 InGroup = GetComponentDataFromEntity<InGroupComponent>(true),
+                Score = GetComponentDataFromEntity<ScoreComponent>(),
+                ScoreEntity = scoreEntity,
                 Helper = helper,
                 MinGroupSize = settings.MinGroupSize
             };

@@ -38,6 +38,8 @@ namespace ECS.Components
                 var prefab = conversionSystem.GetPrimaryEntity(Prefabs[i]);
                 buffer.Add(new GemSet {Prefab = prefab});
             }
+            
+            dstManager.AddComponent<ScoreComponent>(entity);
         }
     }
 }
