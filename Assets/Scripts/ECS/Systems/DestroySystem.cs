@@ -52,7 +52,7 @@ namespace ECS.Systems
                     
                     if(groupSize < MinGroupSize)
                         continue;
-
+                    
                     for (var y = 0; y < CachedEntities.Length; ++y)
                     {
                         var entity = CachedEntities[y];
